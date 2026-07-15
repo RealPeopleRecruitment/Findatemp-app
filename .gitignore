@@ -4,3 +4,5 @@ node_modules
 .env.local
 prisma/data/*.csv
 *.log
+.vercel
+.env*
