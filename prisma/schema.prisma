@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+enum TempStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RequestType {
+  CV
+  INTERVIEW
+  TRIAL
+}
+
+model Area {
+  id    String @id @default(cuid())
+  name  String @unique // e.g. "Dublin 2"
+  slug  String @unique // e.g. "dublin-2"
+  temps Temp[]
+}
+
+model Category {
+  id          String           @id @default(cuid())
+  name        String           @unique // e.g. "Catering"
+  slug        String           @unique // e.g. "catering"
+  description String? // used for SEO meta on category landing pages
+  temps       CategoryOnTemp[]
+}
+
+model Temp {
+  id          String           @id @default(cuid())
+  fullName    String
+  email       String
+  phone       String
+  areaId      String
+  area        Area             @relation(fields: [areaId], references: [id])
+  categories  CategoryOnTemp[]
+  payMin      Decimal          @db.Decimal(6, 2)
+  payMax      Decimal          @db.Decimal(6, 2)
+  drives      Boolean          @default(false)
+  bullet1     String
+  bullet2     String
+  bullet3     String
+  cvUrl       String // Vercel Blob URL — NEVER rendered on public pages, only used server-side in admin/email
+  status      TempStatus       @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  requests    Request[]
+
+  @@index([areaId])
+  @@index([status])
+}
+
+model CategoryOnTemp {
+  tempId     String
+  categoryId String
+  temp       Temp     @relation(fields: [tempId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([tempId, categoryId])
+}
+
+model Request {
+  id          String      @id @default(cuid())
+  tempId      String
+  temp        Temp        @relation(fields: [tempId], references: [id])
+  type        RequestType
+  companyName String
+  contactName String
+  email       String
+  phone       String
+  message     String?
+  createdAt   DateTime    @default(now())
+
+  @@index([tempId])
+}
