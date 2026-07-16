@@ -30,9 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <header className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-brand">
-              FIND<span className="text-gray-900">A</span>TEMP
-            </Link>
+<Link href="/" className="flex items-center">
+  <img src="/logo.png" alt="Find A Temp" className="h-10 w-auto" />
+</Link>
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
               <Link href="/browse" className="hover:text-brand">Browse Temps</Link>
               <Link href="/#categories" className="hover:text-brand">Categories</Link>
