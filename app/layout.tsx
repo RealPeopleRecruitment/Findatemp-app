@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import './globals.css';
+import CookieBanner from '@/components/CookieBanner';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.findatemp.ie'),
@@ -82,7 +83,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="text-center text-xs text-gray-400 pb-6">
             © {new Date().getFullYear()} Find A Temp. All rights reserved.
           </div>
-        </footer>
+</footer>
+        <CookieBanner />
       </body>
     </html>
   );
