@@ -4,6 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'gerard@findatemp.ie';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'notifications@findatemp.ie';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.findatemp.ie';
 
 type RequestType = 'CV' | 'INTERVIEW' | 'TRIAL';
 
@@ -13,11 +14,6 @@ const REQUEST_LABELS: Record<RequestType, string> = {
   TRIAL: 'A Temporary Trial',
 };
 
-/**
- * Notifies the admin when a company requests a CV / interview / trial for a temp.
- * For CV requests specifically, includes the blob URL so the admin can review it
- * before deciding whether to share — this is the GDPR consent checkpoint.
- */
 export async function sendRequestNotification(params: {
   requestType: RequestType;
   temp: { id: string; fullName: string; cvUrl: string };
@@ -31,10 +27,11 @@ export async function sendRequestNotification(params: {
 
   const subject = `New Request: ${REQUEST_LABELS[requestType]} — ${temp.fullName} (${companyName})`;
 
+  const cvLink = `${SITE_URL}/api/admin/cv?pathname=${encodeURIComponent(temp.cvUrl)}`;
   const cvNote =
     requestType === 'CV'
       ? `<p><strong>Note:</strong> Please check with ${temp.fullName} before sharing their CV — do not forward it automatically.</p>
-         <p>CV file: <a href="${temp.cvUrl}">${temp.cvUrl}</a></p>`
+         <p>View CV (requires your admin login): <a href="${cvLink}">${cvLink}</a></p>`
       : '';
 
   const html = `
@@ -59,25 +56,27 @@ export async function sendRequestNotification(params: {
     });
   } catch (err) {
     console.error('Failed to send request notification email:', err);
-    // Don't throw — the Request row is already saved in the DB, so the
-    // enquiry isn't lost even if the email fails. Check the admin panel.
   }
 }
 
-/**
- * Notifies the admin when a new temp registers, so they know to review/approve.
- */
 export async function sendNewRegistrationNotification(params: {
   fullName: string;
   email: string;
   areaName: string;
+  catsSuccess?: boolean;
+  catsCandidateId?: string;
+  catsError?: string;
 }) {
+  const catsLine = params.catsSuccess
+    ? `<p>✅ Synced to CATS — candidate ID ${params.catsCandidateId}.</p>`
+    : `<p>⚠️ Not synced to CATS: ${params.catsError || 'unknown error'}. Add them manually if needed.</p>`;
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
       subject: `New Temp Registration: ${params.fullName}`,
-      html: `<p>${params.fullName} (${params.email}) registered from ${params.areaName}. Review and approve in the admin panel.</p>`,
+      html: `<p>${params.fullName} (${params.email}) registered from ${params.areaName}. Review and approve in the admin panel.</p>${catsLine}`,
     });
   } catch (err) {
     console.error('Failed to send registration notification email:', err);

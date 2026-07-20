@@ -58,7 +58,7 @@ export default async function AdminPage() {
                 <li>{temp.bullet3}</li>
               </ul>
 
-              <a href={temp.cvUrl} target="_blank" rel="noreferrer" className="text-sm text-brand underline">
+              <a href={`/api/admin/cv?pathname=${encodeURIComponent(temp.cvUrl)}`} target="_blank" rel="noreferrer" className="text-sm text-brand underline">
                 View CV
               </a>
 

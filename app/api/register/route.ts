@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { prisma } from '@/lib/prisma';
 import { sendNewRegistrationNotification } from '@/lib/email';
+import { pushCandidateToCats } from '@/lib/cats';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +30,6 @@ export async function POST(req: NextRequest) {
     const categoryIds = formData.getAll('categoryIds').map(String);
     const cvFile = formData.get('cv') as File | null;
 
-    // --- Validation ---
     if (!fullName || !email || !phone || !areaId || !bullet1 || !bullet2 || !bullet3) {
       return NextResponse.json({ error: 'Please fill in all required fields.' }, { status: 400 });
     }
@@ -57,17 +57,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid area selected.' }, { status: 400 });
     }
 
-    // --- Upload CV to Vercel Blob ---
-    // NOTE: this URL is unguessable (random suffix) but not access-controlled.
-    // It is never rendered on any public page — only surfaced in admin/email.
-    // For stronger guarantees later, migrate to Vercel Blob's private/signed-URL mode.
+    const categories = await prisma.category.findMany({ where: { id: { in: categoryIds } } });
+
+    const cvArrayBuffer = await cvFile.arrayBuffer();
+    const cvBuffer = Buffer.from(cvArrayBuffer);
+
     const safeName = cvFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    const blob = await put(`cvs/${Date.now()}-${safeName}`, cvFile, {
-      access: 'public',
+    const blob = await put(`cvs/${Date.now()}-${safeName}`, cvBuffer, {
+      access: 'private',
       addRandomSuffix: true,
+      contentType: cvFile.type,
     });
 
-    // --- Save to database ---
     const temp = await prisma.temp.create({
       data: {
         fullName,
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
         bullet1,
         bullet2,
         bullet3,
-        cvUrl: blob.url,
+        cvUrl: blob.pathname,
         status: 'PENDING',
         categories: {
           create: categoryIds.map((categoryId) => ({ categoryId })),
@@ -88,7 +89,34 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await sendNewRegistrationNotification({ fullName, email, areaName: area.name });
+    const catsResult = await pushCandidateToCats({
+      fullName,
+      email,
+      phone,
+      areaName: area.name,
+      categoryNames: categories.map((c) => c.name),
+      payMin,
+      payMax,
+      drives,
+      bullet1,
+      bullet2,
+      bullet3,
+      cvBuffer,
+      cvFilename: safeName,
+    });
+
+    if (!catsResult.success || catsResult.error) {
+      console.error('CATS sync issue:', catsResult.error);
+    }
+
+    await sendNewRegistrationNotification({
+      fullName,
+      email,
+      areaName: area.name,
+      catsSuccess: catsResult.success,
+      catsCandidateId: catsResult.candidateId,
+      catsError: catsResult.error,
+    });
 
     return NextResponse.json({ success: true, id: temp.id });
   } catch (err) {
