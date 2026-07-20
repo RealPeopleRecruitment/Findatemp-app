@@ -100,8 +100,7 @@ export async function pushCandidateToCats(params: PushCandidateParams): Promise<
           Authorization: `Token ${apiKey}`,
           'Content-Type': 'application/octet-stream',
         },
-        body: params.cvBuffer,
-      }
+body: new Uint8Array(params.cvBuffer),      }
     );
 
     if (!resumeRes.ok) {
