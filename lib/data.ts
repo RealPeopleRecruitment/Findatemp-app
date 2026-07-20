@@ -1,5 +1,7 @@
 import { prisma } from './prisma';
 
+export const MIN_TEMPS_FOR_INDEX = 3;
+
 export async function getCategoriesWithCounts() {
   const categories = await prisma.category.findMany({
     orderBy: { name: 'asc' },
@@ -64,4 +66,34 @@ export async function getAreaBySlug(slug: string) {
 
 export async function getCategoryBySlug(slug: string) {
   return prisma.category.findUnique({ where: { slug } });
+}
+
+export async function getAreaCategoryCombosWithCounts() {
+  const temps = await prisma.temp.findMany({
+    where: { status: 'APPROVED' },
+    include: { area: true, categories: { include: { category: true } } },
+  });
+
+  type Combo = { areaSlug: string; areaName: string; categorySlug: string; categoryName: string; count: number };
+  const combos = new Map<string, Combo>();
+
+  for (const temp of temps) {
+    for (const c of temp.categories) {
+      const key = `${temp.area.slug}__${c.category.slug}`;
+      const existing = combos.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        combos.set(key, {
+          areaSlug: temp.area.slug,
+          areaName: temp.area.name,
+          categorySlug: c.category.slug,
+          categoryName: c.category.name,
+          count: 1,
+        });
+      }
+    }
+  }
+
+  return Array.from(combos.values());
 }

@@ -29,21 +29,17 @@ export default async function TempProfilePage({ params }: { params: { id: string
 
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'JobPosting',
-    title: `${temp.categories.map((c) => c.category.name).join(', ')} Temp — ${temp.area.name}`,
+    '@type': 'Person',
+    name: displayName,
+    jobTitle: temp.categories.map((c) => c.category.name).join(', '),
     description: temp.bullet1,
-    datePosted: temp.createdAt.toISOString(),
-    employmentType: 'TEMPORARY',
-    hiringOrganization: { '@type': 'Organization', name: 'Find A Temp', sameAs: 'https://www.findatemp.ie' },
-    jobLocation: {
-      '@type': 'Place',
-      address: { '@type': 'PostalAddress', addressLocality: temp.area.name, addressRegion: 'Dublin', addressCountry: 'IE' },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: temp.area.name,
+      addressRegion: 'Dublin',
+      addressCountry: 'IE',
     },
-    baseSalary: {
-      '@type': 'MonetaryAmount',
-      currency: 'EUR',
-      value: { '@type': 'QuantitativeValue', minValue: Number(temp.payMin), maxValue: Number(temp.payMax), unitText: 'HOUR' },
-    },
+    knowsAbout: temp.categories.map((c) => c.category.name),
   };
 
   return (
@@ -55,7 +51,7 @@ export default async function TempProfilePage({ params }: { params: { id: string
           <h1 className="text-3xl font-bold">{displayName}</h1>
           <p className="text-gray-500">{temp.area.name}</p>
         </div>
-        {temp.drives && <span className="tag">🚗 Driver</span>}
+        {temp.drives ? <span className="tag">🚗 Driver</span> : <span className="tag">🚌 Public Transport</span>}
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">

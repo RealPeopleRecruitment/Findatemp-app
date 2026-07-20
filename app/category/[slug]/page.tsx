@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { getApprovedTemps, getAreasWithCounts, getCategoryBySlug } from '@/lib/data';
+import { getApprovedTemps, getAreasWithCounts, getCategoryBySlug, getAreaCategoryCombosWithCounts } from '@/lib/data';
 import TempCard from '@/components/TempCard';
 import FilterBar from '@/components/FilterBar';
 
@@ -39,7 +40,7 @@ export default async function CategoryPage({
   const category = await getCategoryBySlug(params.slug);
   if (!category) notFound();
 
-  const [areas, temps] = await Promise.all([
+  const [areas, temps, allCombos] = await Promise.all([
     getAreasWithCounts(),
     getApprovedTemps({
       categorySlug: params.slug,
@@ -47,14 +48,39 @@ export default async function CategoryPage({
       maxRate: searchParams.maxRate ? parseFloat(searchParams.maxRate) : undefined,
       drivesOnly: searchParams.drives === 'true',
     }),
+    getAreaCategoryCombosWithCounts(),
   ]);
+
+  const comboLinksForThisCategory = allCombos.filter((c) => c.categorySlug === params.slug);
+
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: temps.map((temp, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: `https://www.findatemp.ie/temp/${temp.id}`,
+    })),
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+
       <h1 className="text-3xl font-bold mb-2">{category.name} Temp Staff in Dublin</h1>
       <p className="text-gray-600 mb-6">
         {temps.length} {category.name.toLowerCase()} temp{temps.length === 1 ? '' : 's'} currently available across Dublin.
       </p>
+
+      {comboLinksForThisCategory.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {comboLinksForThisCategory.map((c) => (
+            <Link key={c.areaSlug} href={`/area/${c.areaSlug}/${category.slug}`} className="tag hover:bg-brand hover:text-white transition-colors">
+              {c.areaName} ({c.count})
+            </Link>
+          ))}
+        </div>
+      )}
 
       <FilterBar areas={areas} categories={[]} hideCategoryFilter />
 

@@ -30,8 +30,7 @@ export default function TempCard({
     <Link href={`/temp/${id}`} className="card block">
       <div className="flex items-start justify-between mb-2">
         <h3 className="font-semibold text-lg">{displayName}</h3>
-        {drives && <span className="tag">🚗 Driver</span>}
-      </div>
+{drives ? <span className="tag">🚗 Driver</span> : <span className="tag">🚌 Public Transport</span>}      </div>
       <p className="text-sm text-gray-500 mb-3">{areaName}</p>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {categoryNames.map((name) => (

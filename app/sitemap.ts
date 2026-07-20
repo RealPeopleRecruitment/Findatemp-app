@@ -1,11 +1,13 @@
 import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
+import { getAreaCategoryCombosWithCounts, MIN_TEMPS_FOR_INDEX } from '@/lib/data';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [areas, categories, temps] = await Promise.all([
+  const [areas, categories, temps, combos] = await Promise.all([
     prisma.area.findMany({ select: { slug: true } }),
     prisma.category.findMany({ select: { slug: true } }),
     prisma.temp.findMany({ where: { status: 'APPROVED' }, select: { id: true, updatedAt: true } }),
+    getAreaCategoryCombosWithCounts(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -26,11 +28,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const comboPages: MetadataRoute.Sitemap = combos
+    .filter((c) => c.count >= MIN_TEMPS_FOR_INDEX)
+    .map((c) => ({
+      url: `https://www.findatemp.ie/area/${c.areaSlug}/${c.categorySlug}`,
+      priority: 0.85,
+    }));
+
   const tempPages: MetadataRoute.Sitemap = temps.map((t) => ({
     url: `https://www.findatemp.ie/temp/${t.id}`,
     lastModified: t.updatedAt,
     priority: 0.6,
   }));
 
-  return [...staticPages, ...areaPages, ...categoryPages, ...tempPages];
+  return [...staticPages, ...areaPages, ...categoryPages, ...comboPages, ...tempPages];
 }
