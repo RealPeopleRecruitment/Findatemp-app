@@ -37,7 +37,12 @@ export default async function AdminPage() {
                 <div>
                   <h2 className="font-semibold text-lg">{temp.fullName}</h2>
                   <p className="text-sm text-gray-500">
-                    {temp.email} · {temp.phone} · {temp.area.name}
+                    {temp.email && temp.phone
+                      ? `${temp.email} · ${temp.phone}`
+                      : temp.externalRef
+                        ? `Ref: ${temp.externalRef} (no direct contact — cross-reference your own records)`
+                        : 'No contact info on file'}
+                    {' · '}{temp.area.name}
                   </p>
                 </div>
                 <p className="font-bold text-brand">
@@ -58,9 +63,13 @@ export default async function AdminPage() {
                 <li>{temp.bullet3}</li>
               </ul>
 
-              <a href={`/api/admin/cv?pathname=${encodeURIComponent(temp.cvUrl)}`} target="_blank" rel="noreferrer" className="text-sm text-brand underline">
-                View CV
-              </a>
+              {temp.cvUrl ? (
+                <a href={`/api/admin/cv?pathname=${encodeURIComponent(temp.cvUrl)}`} target="_blank" rel="noreferrer" className="text-sm text-brand underline">
+                  View CV
+                </a>
+              ) : (
+                <p className="text-sm text-gray-400 italic">No CV on file</p>
+              )}
 
               <div className="flex gap-3 mt-4">
                 <form action={approveTemp.bind(null, temp.id)}>

@@ -9,6 +9,15 @@ const AREAS = [
   'Dublin 12', 'Dublin 13', 'Dublin 14', 'Dublin 15', 'Dublin 16', 'Dublin 17',
   'Dublin 18', 'Dublin 20', 'Dublin 22', 'Dublin 24',
   'North County Dublin', 'South County Dublin', 'Dun Laoghaire',
+  'Artane', 'Ballsbridge', 'Ballyfermot', 'Ballymun', 'Blackrock', 'Blanchardstown',
+  'Cabra', 'Castleknock', 'Celbridge', 'Chapelizod', 'Clondalkin', 'Clonskeagh',
+  'Clontarf', 'Coolock', 'Crumlin', 'Dalkey', 'Donnybrook', 'Drumcondra', 'Dundrum',
+  'Finglas', 'Firhouse', 'Foxrock', 'Glasnevin', "Harold's Cross", 'Howth', 'Inchicore',
+  'Kilbarrack', 'Killester', 'Killiney', 'Kimmage', 'Knocklyon', 'Leixlip', 'Lucan',
+  'Malahide', 'Maynooth', 'Monkstown', 'Palmerstown', 'Phibsborough', 'Portmarnock',
+  'Raheny', 'Ranelagh', 'Rathfarnham', 'Rathgar', 'Rathmines', 'Ringsend', 'Sandyford',
+  'Sandymount', 'Santry', 'Stillorgan', 'Sutton', 'Swords', 'Tallaght', 'Templeogue',
+  'Terenure', 'Walkinstown', 'Whitehall',
 ];
 
 const CATEGORIES: { name: string; description: string }[] = [
@@ -51,6 +60,18 @@ const CATEGORIES: { name: string; description: string }[] = [
   {
     name: 'Customer Service',
     description: 'Call centre and customer service staff available for temporary Dublin cover.',
+  },
+  {
+    name: 'Healthcare & Social Care',
+    description: 'Home care assistants, healthcare assistants, and support workers available for temporary Dublin placements.',
+  },
+  {
+    name: 'Security',
+    description: 'Security officers, door supervisors, and CCTV operators available for temporary Dublin work.',
+  },
+  {
+    name: 'Construction & Trades',
+    description: "Labourers, carpenters, electricians' mates, painters and other trades available for temporary Dublin work.",
   },
 ];
 

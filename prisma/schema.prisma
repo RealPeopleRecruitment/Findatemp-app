@@ -37,8 +37,9 @@ model Category {
 model Temp {
   id          String           @id @default(cuid())
   fullName    String
-  email       String
-  phone       String
+  email       String?
+  phone       String?
+  externalRef String?
   areaId      String
   area        Area             @relation(fields: [areaId], references: [id])
   categories  CategoryOnTemp[]

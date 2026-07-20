@@ -1,123 +1,157 @@
-/**
- * Bulk import script for your existing temp dataset.
- *
- * USAGE:
- * 1. Export/save your dataset as prisma/data/temps-import.csv with these columns
- *    (header row required, exact names):
- *      fullName, email, phone, area, categories, payMin, payMax, drives, bullet1, bullet2, bullet3, cvUrl
- *
- *    - area          : must match an existing Area name (e.g. "Dublin 2") — run `npm run db:seed` first
- *    - categories     : comma-separated category names (e.g. "Catering,Hospitality")
- *    - drives         : "true" or "false"
- *    - cvUrl          : a URL to the CV file. If you don't have CVs hosted anywhere yet, leave blank —
- *                        imported temps will need a CV uploaded before they can be approved.
- *
- * 2. Run: npm run db:import
- *
- * All imported temps are created with status APPROVED by default (see APPROVE_ON_IMPORT below) —
- * change to PENDING if you'd rather review each one first.
- */
-
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import { parse } from 'csv-parse/sync';
 
 const prisma = new PrismaClient();
-const APPROVE_ON_IMPORT = true;
 
-type CsvRow = {
-  fullName: string;
-  email: string;
-  phone: string;
-  area: string;
-  categories: string;
-  payMin: string;
-  payMax: string;
-  drives: string;
-  bullet1: string;
-  bullet2: string;
-  bullet3: string;
-  cvUrl: string;
+const JOB_TITLE_TO_CATEGORY: Record<string, string> = {
+  'Customer Service Advisor': 'Customer Service',
+  'Telesales Executive': 'Customer Service',
+  'Call Centre Agent': 'Customer Service',
+  'Customer Service Representative': 'Customer Service',
+
+  'Door Supervisor': 'Security',
+  'Security Officer': 'Security',
+  'CCTV Operator': 'Security',
+
+  'Warehouse Operative': 'Warehouse',
+  'Forklift operative': 'Warehouse',
+  'Dispatch Operative': 'Warehouse',
+  'Stock Assistant': 'Warehouse',
+
+  'Home Care Assistant': 'Healthcare & Social Care',
+  'Care Support Worker': 'Healthcare & Social Care',
+  'Healthcare Assistant': 'Healthcare & Social Care',
+  'Support Worker': 'Healthcare & Social Care',
+
+  Cashier: 'Retail',
+  'Sales Assistant': 'Retail',
+  'Visual Merchandiser': 'Retail',
+  'Retail Supervisor': 'Retail',
+  'Store Assistant': 'Retail',
+
+  Labourer: 'Construction & Trades',
+  "Electrician's Mate": 'Construction & Trades',
+  Carpenter: 'Construction & Trades',
+  'Painter/Decorator': 'Construction & Trades',
+  Plasterer: 'Construction & Trades',
+  Groundworker: 'Construction & Trades',
+
+  'Logistics Coordinator': 'Driving & Logistics',
+  'Van Driver': 'Driving & Logistics',
+  'HGV Driver': 'Driving & Logistics',
+  'Delivery Driver': 'Driving & Logistics',
+
+  'Machine Operator': 'Production',
+  'Quality Control Inspector': 'Production',
+  'Production Operative': 'Production',
+  'Assembly Line Operative': 'Production',
+  'General Operative': 'Production',
+
+  'Office Assistant': 'Office & Admin',
+  'Data Entry Clerk': 'Office & Admin',
+  Receptionist: 'Office & Admin',
+  Administrator: 'Office & Admin',
+  'Accounts Assistant': 'Office & Admin',
+
+  'Waiter/Waitress': 'Hospitality',
+  Barista: 'Hospitality',
+  'Front of House Assistant': 'Hospitality',
+  Bartender: 'Hospitality',
+
+  'Commis Chef': 'Catering',
+  'Kitchen Porter': 'Catering',
+  'Catering Assistant': 'Catering',
+
+  'Housekeeping Assistant': 'Cleaning & Facilities',
 };
 
-function parseCsv(content: string): CsvRow[] {
-  const lines = content.trim().split('\n');
-  const headers = lines[0].split(',').map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    // Basic CSV split — for fields containing commas, wrap them in "quotes" in the source file.
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    for (const char of line) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
-
-    const row: any = {};
-    headers.forEach((h, i) => {
-      row[h] = values[i] ?? '';
-    });
-    return row as CsvRow;
-  });
+function toBullets(description: string): [string, string, string] {
+  const segments = description.split(' -- ').map((s) => s.trim()).filter(Boolean);
+  if (segments.length <= 3) {
+    return [segments[0] || '', segments[1] || '', segments[2] || ''];
+  }
+  return [segments[0], segments[1], segments.slice(2).join('. ')];
 }
 
 async function main() {
-  const filePath = path.join(__dirname, 'data', 'temps-import.csv');
+  const filePath = path.join(__dirname, 'data', 'dublin-candidates.csv');
   if (!fs.existsSync(filePath)) {
-    console.error(`No file found at ${filePath}. Create it first — see instructions at the top of this script.`);
+    console.error(`No file found at ${filePath}. Place the CSV there first.`);
     process.exit(1);
   }
 
-  const rows = parseCsv(fs.readFileSync(filePath, 'utf-8'));
+  const records: any[] = parse(fs.readFileSync(filePath, 'utf-8'), {
+    columns: true,
+    skip_empty_lines: true,
+  });
+
+  const areaCache = new Map<string, string>();
+  const categoryCache = new Map<string, string>();
+
   let created = 0;
   let skipped = 0;
 
-  for (const row of rows) {
-    const area = await prisma.area.findUnique({ where: { name: row.area.trim() } });
-    if (!area) {
-      console.warn(`Skipping ${row.fullName} — unknown area "${row.area}"`);
+  for (const row of records) {
+    const areaName = (row.Areas || '').trim();
+    const jobTitle = (row.JobTitle || '').trim();
+    const categoryName = JOB_TITLE_TO_CATEGORY[jobTitle];
+
+    if (!areaName || !jobTitle || !categoryName) {
+      console.warn(`Skipping ${row.FirstName} — unrecognised area "${areaName}" or job title "${jobTitle}"`);
       skipped++;
       continue;
     }
 
-    const categoryNames = row.categories.split(',').map((c) => c.trim()).filter(Boolean);
-    const categories = await prisma.category.findMany({ where: { name: { in: categoryNames } } });
-    if (categories.length === 0) {
-      console.warn(`Skipping ${row.fullName} — no matching categories for "${row.categories}"`);
-      skipped++;
-      continue;
+    if (!areaCache.has(areaName)) {
+      const area = await prisma.area.findUnique({ where: { name: areaName } });
+      if (!area) {
+        console.warn(`Skipping ${row.FirstName} — no Area record for "${areaName}". Run npm run db:seed first.`);
+        skipped++;
+        continue;
+      }
+      areaCache.set(areaName, area.id);
     }
+
+    if (!categoryCache.has(categoryName)) {
+      const category = await prisma.category.findUnique({ where: { name: categoryName } });
+      if (!category) {
+        console.warn(`Skipping ${row.FirstName} — no Category record for "${categoryName}". Run npm run db:seed first.`);
+        skipped++;
+        continue;
+      }
+      categoryCache.set(categoryName, category.id);
+    }
+
+    const rate = parseFloat(row.HourlyRate);
+    const [bullet1, bullet2, bullet3] = toBullets(row.Description || '');
+    const drives = (row.OwnTransport || '').toLowerCase().includes('own');
 
     await prisma.temp.create({
       data: {
-        fullName: row.fullName,
-        email: row.email,
-        phone: row.phone,
-        areaId: area.id,
-        payMin: parseFloat(row.payMin) || 0,
-        payMax: parseFloat(row.payMax) || 0,
-        drives: row.drives?.toLowerCase() === 'true',
-        bullet1: row.bullet1 || '',
-        bullet2: row.bullet2 || '',
-        bullet3: row.bullet3 || '',
-        cvUrl: row.cvUrl || '',
-        status: APPROVE_ON_IMPORT ? 'APPROVED' : 'PENDING',
+        fullName: row.FirstName || 'Unknown',
+        email: null,
+        phone: null,
+        externalRef: row.Email || null,
+        areaId: areaCache.get(areaName)!,
+        payMin: rate,
+        payMax: rate,
+        drives,
+        bullet1,
+        bullet2,
+        bullet3,
+        cvUrl: '',
+        status: 'PENDING',
         categories: {
-          create: categories.map((c) => ({ categoryId: c.id })),
+          create: [{ categoryId: categoryCache.get(categoryName)! }],
         },
       },
     });
     created++;
   }
 
-  console.log(`Imported ${created} temps. Skipped ${skipped}.`);
+  console.log(`Imported ${created} candidates. Skipped ${skipped}.`);
 }
 
 main()
