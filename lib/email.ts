@@ -6,6 +6,19 @@ const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'gerard@findatemp.ie
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'notifications@findatemp.ie';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.findatemp.ie';
 
+const PERSONAL_EMAIL_DOMAINS = [
+  'hotmail.com', 'hotmail.co.uk', 'hotmail.ie',
+  'outlook.com', 'outlook.ie', 'live.com', 'live.ie', 'msn.com',
+  'yahoo.com', 'yahoo.co.uk', 'yahoo.ie',
+  'aol.com', 'icloud.com', 'me.com', 'mail.com', 'gmx.com',
+  'protonmail.com', 'yandex.com',
+];
+
+function isPersonalEmail(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase().trim();
+  return !!domain && PERSONAL_EMAIL_DOMAINS.includes(domain);
+}
+
 type RequestType = 'CV' | 'INTERVIEW' | 'TRIAL';
 
 const REQUEST_LABELS: Record<RequestType, string> = {
@@ -34,10 +47,15 @@ export async function sendRequestNotification(params: {
          <p>View CV (requires your admin login): <a href="${cvLink}">${cvLink}</a></p>`
       : '';
 
+  const personalEmailNote = isPersonalEmail(email)
+    ? `<p style="color:#c0392b;"><strong>⚠️ Personal email address</strong> (${email.split('@')[1]}) — not a business domain like a company website's own email.</p>`
+    : '';
+
   const html = `
     <h2>New ${REQUEST_LABELS[requestType]} Request</h2>
     <p><strong>Temp:</strong> ${temp.fullName} (ID: ${temp.id})</p>
     <hr />
+    ${personalEmailNote}
     <p><strong>Company:</strong> ${companyName}</p>
     <p><strong>Contact name:</strong> ${contactName}</p>
     <p><strong>Email:</strong> ${email}</p>
@@ -56,6 +74,25 @@ export async function sendRequestNotification(params: {
     });
   } catch (err) {
     console.error('Failed to send request notification email:', err);
+  }
+}
+
+export async function sendVerificationCodeEmail(email: string, code: string): Promise<boolean> {
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: `Your Find A Temp verification code: ${code}`,
+      html: `
+        <p>Your verification code is:</p>
+        <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">${code}</p>
+        <p>Enter this on the Find A Temp site to confirm your request. It expires in 10 minutes.</p>
+      `,
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to send verification email:', err);
+    return false;
   }
 }
 

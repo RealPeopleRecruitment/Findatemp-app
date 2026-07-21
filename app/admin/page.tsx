@@ -1,87 +1,94 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { approveTemp, rejectTemp } from './actions';
+import PendingList from './PendingList';
+import ApproveAllButton from './ApproveAllButton';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
-  const [pending, approvedCount, requestCount] = await Promise.all([
+const PAGE_SIZE = 50;
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const page = Math.max(1, parseInt(searchParams.page || '1', 10) || 1);
+
+  const [pendingRaw, totalPending, approvedCount, requestCount] = await Promise.all([
     prisma.temp.findMany({
       where: { status: 'PENDING' },
       include: { area: true, categories: { include: { category: true } } },
       orderBy: { createdAt: 'asc' },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     }),
+    prisma.temp.count({ where: { status: 'PENDING' } }),
     prisma.temp.count({ where: { status: 'APPROVED' } }),
     prisma.request.count(),
   ]);
 
+  const totalPages = Math.max(1, Math.ceil(totalPending / PAGE_SIZE));
+
+  const pending = pendingRaw.map((temp) => ({
+    id: temp.id,
+    fullName: temp.fullName,
+    contactLine:
+      temp.email && temp.phone
+        ? `${temp.email} · ${temp.phone}`
+        : temp.externalRef
+          ? `Ref: ${temp.externalRef} (no direct contact — cross-reference your own records)`
+          : 'No contact info on file',
+    areaName: temp.area.name,
+    categoryNames: temp.categories.map((c) => c.category.name),
+    payMin: Number(temp.payMin),
+    payMax: Number(temp.payMax),
+    drives: temp.drives,
+    bullet1: temp.bullet1,
+    bullet2: temp.bullet2,
+    bullet3: temp.bullet3,
+    cvUrl: temp.cvUrl,
+  }));
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Admin — Pending Registrations</h1>
-        <div className="flex gap-4 text-sm">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h1 className="text-2xl font-bold">
+          Admin — Pending Registrations
+          <span className="text-gray-400 font-normal text-lg"> ({totalPending} total)</span>
+        </h1>
+        <div className="flex items-center gap-4 text-sm">
           <span className="text-gray-500">{approvedCount} approved</span>
           <Link href="/admin/requests" className="text-brand underline">
             View {requestCount} requests
           </Link>
+          <ApproveAllButton totalPending={totalPending} />
         </div>
       </div>
 
       {pending.length === 0 ? (
         <p className="text-gray-500">No pending registrations. 🎉</p>
       ) : (
-        <div className="space-y-4">
-          {pending.map((temp) => (
-            <div key={temp.id} className="card">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h2 className="font-semibold text-lg">{temp.fullName}</h2>
-                  <p className="text-sm text-gray-500">
-                    {temp.email && temp.phone
-                      ? `${temp.email} · ${temp.phone}`
-                      : temp.externalRef
-                        ? `Ref: ${temp.externalRef} (no direct contact — cross-reference your own records)`
-                        : 'No contact info on file'}
-                    {' · '}{temp.area.name}
-                  </p>
-                </div>
-                <p className="font-bold text-brand">
-                  €{Number(temp.payMin).toFixed(2)}–€{Number(temp.payMax).toFixed(2)}/hr
-                </p>
-              </div>
+        <>
+          <PendingList temps={pending} />
 
-              <div className="flex flex-wrap gap-1.5 my-2">
-                {temp.categories.map((c) => (
-                  <span key={c.category.id} className="tag">{c.category.name}</span>
-                ))}
-                {temp.drives && <span className="tag">🚗 Driver</span>}
-              </div>
-
-              <ul className="text-sm text-gray-700 list-disc list-inside mb-3">
-                <li>{temp.bullet1}</li>
-                <li>{temp.bullet2}</li>
-                <li>{temp.bullet3}</li>
-              </ul>
-
-              {temp.cvUrl ? (
-                <a href={`/api/admin/cv?pathname=${encodeURIComponent(temp.cvUrl)}`} target="_blank" rel="noreferrer" className="text-sm text-brand underline">
-                  View CV
-                </a>
-              ) : (
-                <p className="text-sm text-gray-400 italic">No CV on file</p>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              {page > 1 && (
+                <Link href={`/admin?page=${page - 1}`} className="btn-secondary text-sm">
+                  ← Previous
+                </Link>
               )}
-
-              <div className="flex gap-3 mt-4">
-                <form action={approveTemp.bind(null, temp.id)}>
-                  <button type="submit" className="btn-primary text-sm">Approve</button>
-                </form>
-                <form action={rejectTemp.bind(null, temp.id)}>
-                  <button type="submit" className="btn-secondary text-sm">Reject</button>
-                </form>
-              </div>
+              <span className="text-sm text-gray-500">
+                Page {page} of {totalPages}
+              </span>
+              {page < totalPages && (
+                <Link href={`/admin?page=${page + 1}`} className="btn-secondary text-sm">
+                  Next →
+                </Link>
+              )}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

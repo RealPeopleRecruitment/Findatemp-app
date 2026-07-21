@@ -82,3 +82,26 @@ model Request {
 
   @@index([tempId])
 }
+
+model VerifiedContact {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  phone      String
+  verifiedAt DateTime @default(now())
+}
+
+model VerificationCode {
+  id          String      @id @default(cuid())
+  email       String
+  phone       String
+  code        String
+  tempId      String
+  requestType RequestType
+  companyName String
+  contactName String
+  message     String?
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+
+  @@index([email])
+}

@@ -16,6 +16,10 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -33,17 +37,44 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
     };
 
     try {
-      const res = await fetch('/api/request', {
+      const res = await fetch('/api/request/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Something went wrong. Please try again.');
-      setSubmitted(true);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+
+      if (data.verified) {
+        setSubmitted(true);
+      } else {
+        setVerificationId(data.verificationId);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleVerify(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setVerifying(true);
+
+    try {
+      const res = await fetch('/api/request/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verificationId, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setVerifying(false);
     }
   }
 
@@ -53,6 +84,35 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
         <p className="font-semibold mb-1">Request sent!</p>
         <p className="text-sm">We&apos;ll be in touch shortly to follow up on {tempFirstName}&apos;s availability.</p>
       </div>
+    );
+  }
+
+  if (verificationId) {
+    return (
+      <form onSubmit={handleVerify} className="card space-y-4">
+        <h3 className="font-semibold">Verify your details</h3>
+        <p className="text-sm text-gray-600">
+          We&apos;ve sent a 6-digit code to your email. Enter it below to confirm your request.
+        </p>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="6-digit code"
+          inputMode="numeric"
+          maxLength={6}
+          required
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-40 text-center text-lg tracking-widest"
+        />
+        <div className="flex gap-3">
+          <button type="submit" disabled={verifying} className="btn-primary disabled:opacity-60">
+            {verifying ? 'Verifying…' : 'Verify & Send Request'}
+          </button>
+          <button type="button" onClick={() => setVerificationId(null)} className="btn-secondary">
+            Back
+          </button>
+        </div>
+      </form>
     );
   }
 
