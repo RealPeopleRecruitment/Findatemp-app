@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendRequestNotification, sendVerificationCodeEmail } from '@/lib/email';
 import { verifyTurnstileToken } from '@/lib/turnstile';
+import { checkRequestRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,11 @@ function generateCode(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const withinLimit = await checkRequestRateLimit(req);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many attempts. Please try again in a few minutes.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const { tempId, type, companyName, contactName, email, phone, message, turnstileToken } = body;
 

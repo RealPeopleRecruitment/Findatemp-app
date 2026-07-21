@@ -4,12 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { sendNewRegistrationNotification } from '@/lib/email';
 import { pushCandidateToCats } from '@/lib/cats';
 import { verifyTurnstileToken } from '@/lib/turnstile';
+import { checkRegisterRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
-const MINIMUM_WAGE = 14.15; // Irish National Minimum Wage, effective 1 January 2026
+const MINIMUM_WAGE = 14.15;
 
-const MAX_CV_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_CV_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_CV_TYPES = [
   'application/pdf',
   'application/msword',
@@ -18,6 +19,11 @@ const ALLOWED_CV_TYPES = [
 
 export async function POST(req: NextRequest) {
   try {
+    const withinLimit = await checkRegisterRateLimit(req);
+    if (!withinLimit) {
+      return NextResponse.json({ error: 'Too many attempts. Please try again in a few minutes.' }, { status: 429 });
+    }
+
     const formData = await req.formData();
 
     const fullName = String(formData.get('fullName') || '').trim();
@@ -32,13 +38,12 @@ export async function POST(req: NextRequest) {
     const bullet3 = String(formData.get('bullet3') || '').trim();
     const categoryIds = formData.getAll('categoryIds').map(String);
     const cvFile = formData.get('cv') as File | null;
-const turnstileToken = String(formData.get('turnstileToken') || '');
+    const turnstileToken = String(formData.get('turnstileToken') || '');
 
     const humanVerified = await verifyTurnstileToken(turnstileToken);
     if (!humanVerified) {
       return NextResponse.json({ error: 'Verification failed. Please try again.' }, { status: 400 });
     }
-
 
     if (!fullName || !email || !phone || !areaId || !bullet1 || !bullet2 || !bullet3) {
       return NextResponse.json({ error: 'Please fill in all required fields.' }, { status: 400 });
@@ -49,7 +54,7 @@ const turnstileToken = String(formData.get('turnstileToken') || '');
     if (isNaN(payMin) || isNaN(payMax) || payMin < 0 || payMax < payMin) {
       return NextResponse.json({ error: 'Please enter a valid pay range.' }, { status: 400 });
     }
-if (payMin < MINIMUM_WAGE) {
+    if (payMin < MINIMUM_WAGE) {
       return NextResponse.json(
         {
           error: `We require a minimum rate of €${MINIMUM_WAGE.toFixed(2)}/hr, in line with the Irish National Minimum Wage. Please adjust your rate and try again.`,
