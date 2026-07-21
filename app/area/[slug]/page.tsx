@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getApprovedTemps, getAreaBySlug, getCategoriesWithCounts, getAreaCategoryCombosWithCounts } from '@/lib/data';
 import TempCard from '@/components/TempCard';
 import FilterBar from '@/components/FilterBar';
+import ComboFilterToggle from '@/components/ComboFilterToggle';
 
 export const revalidate = 60;
 
@@ -70,15 +70,14 @@ export default async function AreaPage({
         {temps.length} temp{temps.length === 1 ? '' : 's'} currently available in {area.name}.
       </p>
 
-      {comboLinksForThisArea.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {comboLinksForThisArea.map((c) => (
-            <Link key={c.categorySlug} href={`/area/${area.slug}/${c.categorySlug}`} className="tag hover:bg-brand hover:text-white transition-colors">
-              {c.categoryName} ({c.count})
-            </Link>
-          ))}
-        </div>
-      )}
+      <ComboFilterToggle
+        toggleLabel="Filter by category"
+        links={comboLinksForThisArea.map((c) => ({
+          key: c.categorySlug,
+          href: `/area/${area.slug}/${c.categorySlug}`,
+          label: `${c.categoryName} (${c.count})`,
+        }))}
+      />
 
       <FilterBar areas={[]} categories={categories} hideAreaFilter />
 
