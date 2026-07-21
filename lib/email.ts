@@ -86,8 +86,9 @@ export async function sendVerificationCodeEmail(email: string, code: string): Pr
       html: `
         <p>Your verification code is:</p>
         <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">${code}</p>
-<p>Enter this on the Find A Temp site to confirm your request. It expires in 10 minutes.</p>
-        <p style="color:#666; font-size: 13px;">Don't see this in your inbox? Please check your spam or junk folder.</p>      `,
+        <p>Enter this on the Find A Temp site to confirm your request. It expires in 10 minutes.</p>
+        <p style="color:#666; font-size: 13px;">Don't see this in your inbox? Please check your spam or junk folder.</p>
+      `,
     });
     return true;
   } catch (err) {
@@ -117,5 +118,35 @@ export async function sendNewRegistrationNotification(params: {
     });
   } catch (err) {
     console.error('Failed to send registration notification email:', err);
+  }
+}
+
+export async function sendProfileExpiryWarning(params: {
+  email: string;
+  fullName: string;
+  tempId: string;
+}): Promise<boolean> {
+  const renewLink = `${SITE_URL}/api/temp/confirm-active?id=${params.tempId}`;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: params.email,
+      subject: 'Your Find A Temp profile — action needed to stay listed',
+      html: `
+        <p>Hi ${params.fullName.split(' ')[0]},</p>
+        <p>Your profile on Find A Temp hasn't been updated in a while. In line with our data
+        retention policy, it will be automatically removed in 30 days unless you let us know
+        you're still looking for work.</p>
+        <p><a href="${renewLink}" style="display:inline-block;background:#0b5fff;color:#fff;
+        padding:10px 20px;border-radius:6px;text-decoration:none;">Keep my profile active</a></p>
+        <p>If you no longer want to be listed, you don't need to do anything — your profile and
+        CV will be automatically deleted.</p>
+      `,
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to send profile expiry warning email:', err);
+    return false;
   }
 }

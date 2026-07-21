@@ -72,7 +72,7 @@ model CategoryOnTemp {
 model Request {
   id          String      @id @default(cuid())
   tempId      String
-  temp        Temp        @relation(fields: [tempId], references: [id], onDelete: Cascade)
+  temp        Temp        @relation(fields: [tempId], references: [id])
   type        RequestType
   companyName String
   contactName String
