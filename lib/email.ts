@@ -86,8 +86,8 @@ export async function sendVerificationCodeEmail(email: string, code: string): Pr
       html: `
         <p>Your verification code is:</p>
         <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">${code}</p>
-        <p>Enter this on the Find A Temp site to confirm your request. It expires in 10 minutes.</p>
-      `,
+<p>Enter this on the Find A Temp site to confirm your request. It expires in 10 minutes.</p>
+        <p style="color:#666; font-size: 13px;">Don't see this in your inbox? Please check your spam or junk folder.</p>      `,
     });
     return true;
   } catch (err) {

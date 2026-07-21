@@ -93,6 +93,7 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
         <h3 className="font-semibold">Verify your details</h3>
         <p className="text-sm text-gray-600">
           We&apos;ve sent a 6-digit code to your email. Enter it below to confirm your request.
+ Don&apos;t see it? Check your spam or junk folder — it can take a minute to arrive.
         </p>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <input

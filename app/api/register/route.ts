@@ -6,6 +6,8 @@ import { pushCandidateToCats } from '@/lib/cats';
 
 export const runtime = 'nodejs';
 
+const MINIMUM_WAGE = 14.15; // Irish National Minimum Wage, effective 1 January 2026
+
 const MAX_CV_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_CV_TYPES = [
   'application/pdf',
@@ -38,6 +40,14 @@ export async function POST(req: NextRequest) {
     }
     if (isNaN(payMin) || isNaN(payMax) || payMin < 0 || payMax < payMin) {
       return NextResponse.json({ error: 'Please enter a valid pay range.' }, { status: 400 });
+    }
+if (payMin < MINIMUM_WAGE) {
+      return NextResponse.json(
+        {
+          error: `We require a minimum rate of €${MINIMUM_WAGE.toFixed(2)}/hr, in line with the Irish National Minimum Wage. Please adjust your rate and try again.`,
+        },
+        { status: 400 }
+      );
     }
     if (categoryIds.length === 0) {
       return NextResponse.json({ error: 'Please select at least one category.' }, { status: 400 });

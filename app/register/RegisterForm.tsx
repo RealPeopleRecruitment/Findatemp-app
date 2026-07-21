@@ -98,13 +98,16 @@ export default function RegisterForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="payMin" className="block text-sm font-medium mb-1">Min Rate (€/hr) *</label>
-          <input id="payMin" name="payMin" type="number" step="0.5" min="0" required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <input id="payMin" name="payMin" type="number" step="0.01" min="14.15" required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
         </div>
         <div>
           <label htmlFor="payMax" className="block text-sm font-medium mb-1">Max Rate (€/hr) *</label>
-          <input id="payMax" name="payMax" type="number" step="0.5" min="0" required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+          <input id="payMax" name="payMax" type="number" step="0.01" min="14.15" required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
         </div>
       </div>
+<p className="text-xs text-gray-500 -mt-3">
+        We require a minimum rate of €14.15/hr, in line with the Irish National Minimum Wage.
+      </p>
 
       <div className="space-y-3">
         <p className="block text-sm font-medium">Tell us about your experience — 3 short points *</p>
