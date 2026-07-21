@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import TurnstileWidget from '@/components/TurnstileWidget';
 
 type Area = { id: string; name: string };
 type Category = { id: string; name: string };
@@ -17,13 +18,21 @@ export default function RegisterForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
+const [turnstileToken, setTurnstileToken] = useState('');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+e.preventDefault();
     setError(null);
+
+    if (!turnstileToken) {
+      setError('Please complete the verification challenge before submitting.');
+      return;
+    }
+
     setSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
+    formData.append('turnstileToken', turnstileToken);
 
     try {
       const res = await fetch('/api/register', {
@@ -133,7 +142,11 @@ export default function RegisterForm({
         </p>
       </div>
 
-      <button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-60">
+<div>
+        <TurnstileWidget onVerify={setTurnstileToken} />
+      </div>
+
+      <button type="submit" disabled={submitting || !turnstileToken} className="btn-primary w-full disabled:opacity-60">
         {submitting ? 'Submitting…' : 'Submit Registration'}
       </button>
     </form>

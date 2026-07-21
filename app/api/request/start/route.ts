@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendRequestNotification, sendVerificationCodeEmail } from '@/lib/email';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 export const runtime = 'nodejs';
 
@@ -13,7 +14,12 @@ function generateCode(): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { tempId, type, companyName, contactName, email, phone, message } = body;
+    const { tempId, type, companyName, contactName, email, phone, message, turnstileToken } = body;
+
+    const humanVerified = await verifyTurnstileToken(turnstileToken);
+    if (!humanVerified) {
+      return NextResponse.json({ error: 'Verification failed. Please try again.' }, { status: 400 });
+    }
 
     if (!tempId || !VALID_TYPES.includes(type) || !companyName || !contactName || !email || !phone) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });

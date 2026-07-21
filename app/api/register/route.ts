@@ -3,6 +3,7 @@ import { put } from '@vercel/blob';
 import { prisma } from '@/lib/prisma';
 import { sendNewRegistrationNotification } from '@/lib/email';
 import { pushCandidateToCats } from '@/lib/cats';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,13 @@ export async function POST(req: NextRequest) {
     const bullet3 = String(formData.get('bullet3') || '').trim();
     const categoryIds = formData.getAll('categoryIds').map(String);
     const cvFile = formData.get('cv') as File | null;
+const turnstileToken = String(formData.get('turnstileToken') || '');
+
+    const humanVerified = await verifyTurnstileToken(turnstileToken);
+    if (!humanVerified) {
+      return NextResponse.json({ error: 'Verification failed. Please try again.' }, { status: 400 });
+    }
+
 
     if (!fullName || !email || !phone || !areaId || !bullet1 || !bullet2 || !bullet3) {
       return NextResponse.json({ error: 'Please fill in all required fields.' }, { status: 400 });

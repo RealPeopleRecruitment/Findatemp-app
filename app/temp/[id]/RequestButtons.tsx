@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import TurnstileWidget from '@/components/TurnstileWidget';
 
 type RequestType = 'CV' | 'INTERVIEW' | 'TRIAL';
 
@@ -15,6 +16,7 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [code, setCode] = useState('');
@@ -23,6 +25,12 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (!turnstileToken) {
+      setError('Please complete the verification challenge before submitting.');
+      return;
+    }
+
     setSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
@@ -34,6 +42,7 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
       email: formData.get('email'),
       phone: formData.get('phone'),
       message: formData.get('message'),
+      turnstileToken,
     };
 
     try {
@@ -93,7 +102,9 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
         <h3 className="font-semibold">Verify your details</h3>
         <p className="text-sm text-gray-600">
           We&apos;ve sent a 6-digit code to your email. Enter it below to confirm your request.
- Don&apos;t see it? Check your spam or junk folder — it can take a minute to arrive.
+        </p>
+        <p className="text-xs text-gray-400">
+          Don&apos;t see it? Check your spam or junk folder — it can take a minute to arrive.
         </p>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <input
@@ -147,8 +158,9 @@ export default function RequestButtons({ tempId, tempFirstName }: { tempId: stri
             <input name="phone" type="tel" placeholder="Phone *" required className="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           <textarea name="message" placeholder="Anything else we should know? (optional)" rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <TurnstileWidget onVerify={setTurnstileToken} />
           <div className="flex gap-3">
-            <button type="submit" disabled={submitting} className="btn-primary disabled:opacity-60">
+            <button type="submit" disabled={submitting || !turnstileToken} className="btn-primary disabled:opacity-60">
               {submitting ? 'Sending…' : 'Send Request'}
             </button>
             <button type="button" onClick={() => setActiveType(null)} className="btn-secondary">
