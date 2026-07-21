@@ -33,4 +33,12 @@ export default function ComboFilterToggle({
       {open && (
         <div className="flex flex-wrap gap-2 mt-3">
           {links.map((link) => (
-            <Link key={link.key} href={link.href}
+            <Link key={link.key} href={link.href} className="tag hover:bg-brand hover:text-white transition-colors">
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

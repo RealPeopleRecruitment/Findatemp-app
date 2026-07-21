@@ -17,7 +17,8 @@ const AREAS = [
   'Malahide', 'Maynooth', 'Monkstown', 'Palmerstown', 'Phibsborough', 'Portmarnock',
   'Raheny', 'Ranelagh', 'Rathfarnham', 'Rathgar', 'Rathmines', 'Ringsend', 'Sandyford',
   'Sandymount', 'Santry', 'Stillorgan', 'Sutton', 'Swords', 'Tallaght', 'Templeogue',
-  'Terenure', 'Walkinstown', 'Whitehall',
+'Terenure', 'Walkinstown', 'Whitehall',
+  'Skerries', 'Balbriggan', 'Rush', 'Lusk', 'Donabate',
 ];
 
 const CATEGORIES: { name: string; description: string }[] = [
