@@ -1,9 +1,30 @@
+/**
+ * Import script for the Dublin candidates dataset (dublin_candidates1_copy.csv format).
+ *
+ * Expected columns (exact header): FirstName, Gender, Sector, JobTitle, Email,
+ * HourlyRate, Areas, OwnTransport, Description
+ *
+ * USAGE:
+ * 1. Place the CSV at prisma/data/<filename>.csv
+ * 2. Run: npx tsx prisma/import.ts <filename>.csv
+ *    (or just `npm run db:import` to use the default dublin-candidates.csv)
+ *
+ * Notes:
+ * - "Email" in the source file is an internal reference code, not a real email —
+ *   it's stored in the externalRef field only, never used as a contact email.
+ * - No CV files are provided for this batch — cvUrl is left blank.
+ * - All imported profiles land as PENDING for manual review.
+ * - This batch is intentionally NOT synced to CATS (no real email to create a candidate with).
+ * - Any rate below the National Minimum Wage is automatically raised to meet it.
+ */
+
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse/sync';
 
 const prisma = new PrismaClient();
+const MINIMUM_WAGE = 14.15;
 
 const JOB_TITLE_TO_CATEGORY: Record<string, string> = {
   'Customer Service Advisor': 'Customer Service',
@@ -76,7 +97,8 @@ function toBullets(description: string): [string, string, string] {
 }
 
 async function main() {
-  const filePath = path.join(__dirname, 'data', 'dublin-candidates.csv');
+  const filename = process.argv[2] || 'dublin-candidates.csv';
+  const filePath = path.join(__dirname, 'data', filename);
   if (!fs.existsSync(filePath)) {
     console.error(`No file found at ${filePath}. Place the CSV there first.`);
     process.exit(1);
@@ -92,6 +114,7 @@ async function main() {
 
   let created = 0;
   let skipped = 0;
+  let raisedToFloor = 0;
 
   for (const row of records) {
     const areaName = (row.Areas || '').trim();
@@ -124,7 +147,9 @@ async function main() {
       categoryCache.set(categoryName, category.id);
     }
 
-    const rate = parseFloat(row.HourlyRate);
+    const rawRate = parseFloat(row.HourlyRate) || 0;
+    const rate = Math.max(MINIMUM_WAGE, rawRate);
+    if (rawRate < MINIMUM_WAGE) raisedToFloor++;
     const [bullet1, bullet2, bullet3] = toBullets(row.Description || '');
     const drives = (row.OwnTransport || '').toLowerCase().includes('own');
 
@@ -151,7 +176,7 @@ async function main() {
     created++;
   }
 
-  console.log(`Imported ${created} candidates. Skipped ${skipped}.`);
+  console.log(`Imported ${created} candidates. Skipped ${skipped}. Raised ${raisedToFloor} rates to the €${MINIMUM_WAGE}/hr minimum.`);
 }
 
 main()
