@@ -51,5 +51,25 @@ export async function POST(req: NextRequest) {
 
     await prisma.verifiedContact.upsert({
       where: { email: verification.email.toLowerCase().trim() },
-      update: { phone:
+      update: { phone: verification.phone, verifiedAt: new Date() },
+      create: { email: verification.email.toLowerCase().trim(), phone: verification.phone },
+    });
 
+    await sendRequestNotification({
+      requestType: verification.requestType,
+      temp: { id: temp.id, fullName: temp.fullName, cvUrl: temp.cvUrl },
+      companyName: verification.companyName,
+      contactName: verification.contactName,
+      email: verification.email,
+      phone: verification.phone,
+      message: verification.message || undefined,
+    });
+
+    await prisma.verificationCode.delete({ where: { id: verification.id } });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Request confirm error:', err);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
+  }
+}
