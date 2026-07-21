@@ -77,7 +77,8 @@ model Request {
   contactName String
   email       String
   phone       String
-  message     String?
+message     String?
+  followedUp  Boolean     @default(false)
   createdAt   DateTime    @default(now())
 
   @@index([tempId])

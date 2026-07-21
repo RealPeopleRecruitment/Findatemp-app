@@ -24,7 +24,7 @@ export default async function AdminPage({
     }),
     prisma.temp.count({ where: { status: 'PENDING' } }),
     prisma.temp.count({ where: { status: 'APPROVED' } }),
-    prisma.request.count(),
+    prisma.request.count({ where: { followedUp: false } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalPending / PAGE_SIZE));
@@ -59,7 +59,7 @@ export default async function AdminPage({
         <div className="flex items-center gap-4 text-sm">
           <span className="text-gray-500">{approvedCount} approved</span>
           <Link href="/admin/requests" className="text-brand underline">
-            View {requestCount} requests
+            {requestCount} request{requestCount === 1 ? "" : "s"} awaiting follow-up
           </Link>
           <ApproveAllButton totalPending={totalPending} />
         </div>
