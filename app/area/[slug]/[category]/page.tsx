@@ -10,7 +10,7 @@ import {
 } from '@/lib/data';
 import TempCard from '@/components/TempCard';
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const combos = await getAreaCategoryCombosWithCounts();

@@ -19,6 +19,11 @@ const AREAS = [
   'Sandymount', 'Santry', 'Stillorgan', 'Sutton', 'Swords', 'Tallaght', 'Templeogue',
 'Terenure', 'Walkinstown', 'Whitehall',
   'Skerries', 'Balbriggan', 'Rush', 'Lusk', 'Donabate',
+'Marino', 'Fairview', 'Beaumont', 'Edenmore', 'Kilmore', 'Baldoyle', 'Clongriffin',
+  'Mulhuddart', 'Tyrrelstown', 'Ongar', 'Clonsilla', 'Stoneybatter', 'Smithfield',
+  'Kilmainham', "Dolphin's Barn", 'Drimnagh', 'Perrystown', 'Ballinteer', 'Churchtown',
+  'Goatstown', 'Milltown', 'Leopardstown', 'Cherrywood', 'Loughlinstown', 'Shankill',
+  'Deansgrange', 'Carrickmines', 'Rathcoole', 'Saggart', 'Citywest',
 ];
 
 const CATEGORIES: { name: string; description: string }[] = [

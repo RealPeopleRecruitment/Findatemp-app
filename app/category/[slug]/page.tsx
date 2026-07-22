@@ -6,7 +6,7 @@ import TempCard from '@/components/TempCard';
 import FilterBar from '@/components/FilterBar';
 import ComboFilterToggle from '@/components/ComboFilterToggle';
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const categories = await prisma.category.findMany({ select: { slug: true } });

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     'Search all available temp staff in Dublin by area, category, rate, and driver status. Request an interview or trial today.',
 };
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export default async function BrowsePage({
   searchParams,
