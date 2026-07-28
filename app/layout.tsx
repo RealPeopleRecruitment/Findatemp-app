@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import './globals.css';
 import CookieBanner from '@/components/CookieBanner';
+import MobileNav from '@/components/MobileNav';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-IE">
       <body>
-        <header className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
+        <header className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50 relative">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
 <Link href="/" className="flex items-center">
   <img src="/logo.png" alt="Find A Temp" className="h-10 w-auto" />
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/about" className="hover:text-brand">About</Link>
               <Link href="/contact" className="hover:text-brand">Contact</Link>
             </nav>
+            <MobileNav />
             <Link href="/register" className="btn-primary text-sm">
               Register as a Temp
             </Link>
