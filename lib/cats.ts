@@ -30,6 +30,35 @@ type PushCandidateResult = {
   error?: string;
 };
 
+async function uploadResume(
+  apiKey: string,
+  candidateId: string,
+  cvBuffer: Buffer,
+  cvFilename: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const resumeRes = await fetch(
+      `${CATS_API_BASE}/candidates/${candidateId}/resumes?filename=${encodeURIComponent(cvFilename)}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Token ${apiKey}`,
+          'Content-Type': 'application/octet-stream',
+        },
+        body: new Uint8Array(cvBuffer),
+      }
+    );
+
+    if (!resumeRes.ok) {
+      const text = await resumeRes.text().catch(() => '');
+      return { success: false, error: `resume upload failed (${resumeRes.status}): ${text}` };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: `resume upload errored: ${String(err)}` };
+  }
+}
+
 export async function pushCandidateToCats(params: PushCandidateParams): Promise<PushCandidateResult> {
   const apiKey = process.env.CATS_API_KEY;
   if (!apiKey) {
@@ -41,7 +70,7 @@ export async function pushCandidateToCats(params: PushCandidateParams): Promise<
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '(not provided)';
 
   const notes = [
-    'Registered via findatemp.ie',
+    `Registered via findatemp.ie (${new Date().toLocaleDateString('en-IE')})`,
     `Area: ${params.areaName}`,
     `Categories: ${params.categoryNames.join(', ')}`,
     `Driver: ${params.drives ? 'Yes' : 'No'}`,
@@ -51,6 +80,8 @@ export async function pushCandidateToCats(params: PushCandidateParams): Promise<
     `- ${params.bullet3}`,
   ].join('\n');
 
+  const desiredPay = `EUR ${params.payMin.toFixed(2)}-${params.payMax.toFixed(2)}/hr`;
+
   const candidateBody = {
     first_name: firstName,
     last_name: lastName,
@@ -59,7 +90,7 @@ export async function pushCandidateToCats(params: PushCandidateParams): Promise<
     address: { city: params.areaName, state: 'Dublin' },
     country_code: 'IE',
     key_skills: params.categoryNames.join(', '),
-    desired_pay: `EUR ${params.payMin.toFixed(2)}-${params.payMax.toFixed(2)}/hr`,
+    desired_pay: desiredPay,
     notes,
     source: 'Find A Temp Website',
     is_active: true,
@@ -79,6 +110,61 @@ export async function pushCandidateToCats(params: PushCandidateParams): Promise<
     return { success: false, error: `Network error contacting CATS: ${String(err)}` };
   }
 
+  if (candidateRes.status === 409) {
+    const body = await candidateRes.json().catch(() => null);
+    const existingId = body?.data_item?.id ? String(body.data_item.id) : undefined;
+
+    if (!existingId) {
+      return { success: false, error: `CATS reported a duplicate but no ID was returned: ${JSON.stringify(body)}` };
+    }
+
+    try {
+      const updateRes = await fetch(`${CATS_API_BASE}/candidates/${existingId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Token ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          address: { city: params.areaName, state: 'Dublin' },
+          country_code: 'IE',
+          key_skills: params.categoryNames.join(', '),
+          desired_pay: desiredPay,
+          notes,
+          is_active: true,
+        }),
+      });
+
+      if (!updateRes.ok) {
+        const text = await updateRes.text().catch(() => '');
+        return {
+          success: true,
+          candidateId: existingId,
+          error: `Found existing candidate (ID ${existingId}) but update failed (${updateRes.status}): ${text}`,
+        };
+      }
+    } catch (err) {
+      return {
+        success: true,
+        candidateId: existingId,
+        error: `Found existing candidate (ID ${existingId}) but update errored: ${String(err)}`,
+      };
+    }
+
+    const resumeResult = await uploadResume(apiKey, existingId, params.cvBuffer, params.cvFilename);
+    if (!resumeResult.success) {
+      return {
+        success: true,
+        candidateId: existingId,
+        error: `Updated existing candidate (ID ${existingId}) but ${resumeResult.error}`,
+      };
+    }
+
+    return { success: true, candidateId: existingId };
+  }
+
   if (!candidateRes.ok) {
     const text = await candidateRes.text().catch(() => '');
     return { success: false, error: `CATS candidate creation failed (${candidateRes.status}): ${text}` };
@@ -91,32 +177,9 @@ export async function pushCandidateToCats(params: PushCandidateParams): Promise<
     return { success: true, error: 'Candidate created in CATS, but no ID returned — resume was not uploaded.' };
   }
 
-  try {
-    const resumeRes = await fetch(
-      `${CATS_API_BASE}/candidates/${candidateId}/resumes?filename=${encodeURIComponent(params.cvFilename)}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Token ${apiKey}`,
-          'Content-Type': 'application/octet-stream',
-        },
-body: new Uint8Array(params.cvBuffer),      }
-    );
-
-    if (!resumeRes.ok) {
-      const text = await resumeRes.text().catch(() => '');
-      return {
-        success: true,
-        candidateId,
-        error: `Candidate created (ID ${candidateId}) but resume upload failed (${resumeRes.status}): ${text}`,
-      };
-    }
-  } catch (err) {
-    return {
-      success: true,
-      candidateId,
-      error: `Candidate created (ID ${candidateId}) but resume upload errored: ${String(err)}`,
-    };
+  const resumeResult = await uploadResume(apiKey, candidateId, params.cvBuffer, params.cvFilename);
+  if (!resumeResult.success) {
+    return { success: true, candidateId, error: `Candidate created (ID ${candidateId}) but ${resumeResult.error}` };
   }
 
   return { success: true, candidateId };
