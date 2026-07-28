@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTempById } from '@/lib/data';
+import { getWhatsAppLink } from '@/lib/whatsapp';
 import RequestButtons from './RequestButtons';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -27,11 +28,17 @@ export default async function TempProfilePage({ params }: { params: { id: string
       ? `${temp.fullName.trim().split(' ')[0]} ${temp.fullName.trim().split(' ').slice(-1)[0][0]}.`
       : temp.fullName;
 
+  const categoryNames = temp.categories.map((c) => c.category.name).join(', ');
+
+  const whatsappLink = getWhatsAppLink(
+    `Hi, I need ${displayName} (${categoryNames}, ${temp.area.name}) urgently — can we talk on WhatsApp? (via findatemp.ie)`
+  );
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: displayName,
-    jobTitle: temp.categories.map((c) => c.category.name).join(', '),
+    jobTitle: categoryNames,
     description: temp.bullet1,
     address: {
       '@type': 'PostalAddress',
@@ -79,6 +86,17 @@ export default async function TempProfilePage({ params }: { params: { id: string
       </p>
 
       <RequestButtons tempId={temp.id} tempFirstName={displayName.split(' ')[0]} />
+
+      <div className="mt-6 text-center">
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-[#25D366] font-semibold hover:underline"
+        >
+          Need {displayName.split(' ')[0]} urgently? Message us on WhatsApp →
+        </a>
+      </div>
     </div>
   );
 }

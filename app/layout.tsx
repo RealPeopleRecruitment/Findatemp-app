@@ -4,6 +4,7 @@ import './globals.css';
 import CookieBanner from '@/components/CookieBanner';
 import MobileNav from '@/components/MobileNav';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.findatemp.ie'),
@@ -89,6 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 </footer>
         <CookieBanner />
         <GoogleAnalytics />
+        <WhatsAppFloatingButton />
       </body>
     </html>
   );
