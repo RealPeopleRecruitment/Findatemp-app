@@ -1,17 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
 import { getApprovedTemps, getAreaBySlug, getCategoriesWithCounts, getAreaCategoryCombosWithCounts } from '@/lib/data';
 import TempCard from '@/components/TempCard';
 import FilterBar from '@/components/FilterBar';
 import ComboFilterToggle from '@/components/ComboFilterToggle';
 
 export const revalidate = 3600;
-
-export async function generateStaticParams() {
-  const areas = await prisma.area.findMany({ select: { slug: true } });
-  return areas.map((a) => ({ slug: a.slug }));
-}
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const area = await getAreaBySlug(params.slug);

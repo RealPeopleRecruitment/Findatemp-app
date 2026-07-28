@@ -5,17 +5,12 @@ import {
   getApprovedTemps,
   getAreaBySlug,
   getCategoryBySlug,
-  getAreaCategoryCombosWithCounts,
   MIN_TEMPS_FOR_INDEX,
 } from '@/lib/data';
 import TempCard from '@/components/TempCard';
 
 export const revalidate = 3600;
 
-export async function generateStaticParams() {
-  const combos = await getAreaCategoryCombosWithCounts();
-  return combos.map((c) => ({ slug: c.areaSlug, category: c.categorySlug }));
-}
 
 export async function generateMetadata({
   params,
