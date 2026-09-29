@@ -1,0 +1,44 @@
+# Find A Temp
+
+> Find A Temp (findatemp.ie) is a Dublin temporary staffing service run by Real People Recruitment. Employers can browse profiles of vetted temps who are available now across Dublin, filtered by area and job category, and request a CV, an interview or a temporary trial with as little as 1 day's notice. There are no upfront fees for employers.
+
+Find A Temp is operated by Real People Recruitment, a Dublin recruitment agency established in 2015 with over 15 years of industry experience. The temp service launched in 2020.
+
+How it works for employers:
+- Browse available temps by Dublin area and category, and see each temp's hourly rate, availability and experience.
+- Request a CV, an interview or a temporary trial directly from a profile. No upfront fees.
+- Find A Temp can arrange interviews and offer letters, employ the temp and run weekly payroll, including Revenue registration, payslips, tax and reference checks.
+
+Categories covered: catering, cleaning and facilities, construction and trades, customer service, driving and logistics, events and promo, healthcare and social care, hospitality, office and admin, production, retail, security, warehouse.
+
+Coverage: Dublin city (Dublin 1 to Dublin 24), County Dublin, and nearby towns including Maynooth, Leixlip and Celbridge.
+
+For job seekers: people looking for temporary work in Dublin can register free and set their areas, availability and hourly rate.
+
+Contact: +353 1 254 4273, gerard@findatemp.ie, The Brickhouse, Block 1, Mount Street Lower, Dublin 2.
+
+## Employers
+- [Browse available temps](https://www.findatemp.ie/browse): search all temps available now across Dublin
+- [Request staff](https://www.findatemp.ie/contact): contact the team about a temp requirement
+- [About Find A Temp](https://www.findatemp.ie/about): company background and the full service
+
+## Categories
+- [Warehouse temps](https://www.findatemp.ie/category/warehouse)
+- [Hospitality temps](https://www.findatemp.ie/category/hospitality)
+- [Catering temps](https://www.findatemp.ie/category/catering)
+- [Office and admin temps](https://www.findatemp.ie/category/office-and-admin)
+- [Production temps](https://www.findatemp.ie/category/production)
+- [Healthcare and social care temps](https://www.findatemp.ie/category/healthcare-and-social-care)
+- [Customer service temps](https://www.findatemp.ie/category/customer-service)
+- [Security temps](https://www.findatemp.ie/category/security)
+- [Retail temps](https://www.findatemp.ie/category/retail)
+- [Driving and logistics temps](https://www.findatemp.ie/category/driving-and-logistics)
+- [Construction and trades temps](https://www.findatemp.ie/category/construction-and-trades)
+- [Cleaning and facilities temps](https://www.findatemp.ie/category/cleaning-and-facilities)
+- [Events and promo temps](https://www.findatemp.ie/category/events-and-promo)
+
+## Job seekers
+- [Register as a temp](https://www.findatemp.ie/register)
+
+## Optional
+- [Sitemap](https://www.findatemp.ie/sitemap.xml): every category and Dublin area page
