@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { getCategoriesWithCounts, getAreasWithCounts } from '@/lib/data';
+import TestimonialCard from '@/components/TestimonialCard';
+import { testimonials } from '@/lib/testimonials';
 
 export default async function HomePage() {
   const [categories, areas] = await Promise.all([
@@ -83,6 +85,21 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      {testimonials.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 py-16">
+          <div className="flex items-end justify-between flex-wrap gap-3 mb-8">
+            <h2 className="text-2xl font-bold">What People Say</h2>
+            <Link href="/testimonials" className="text-brand font-medium hover:underline">
+              Read all testimonials
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.slice(0, 3).map((t, i) => (
+              <TestimonialCard key={i} t={t} />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

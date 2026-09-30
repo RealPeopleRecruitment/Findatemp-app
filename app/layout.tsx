@@ -41,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/browse" className="hover:text-brand">Browse Temps</Link>
               <Link href="/#categories" className="hover:text-brand">Categories</Link>
               <Link href="/#areas" className="hover:text-brand">Dublin Areas</Link>
+              <Link href="/testimonials" className="hover:text-brand">Testimonials</Link>
               <Link href="/about" className="hover:text-brand">About</Link>
               <Link href="/contact" className="hover:text-brand">Contact</Link>
             </nav>
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <p className="font-semibold mb-2">Company</p>
               <ul className="space-y-1 text-gray-600">
                 <li><Link href="/about" className="hover:text-brand">About Us</Link></li>
+                <li><Link href="/testimonials" className="hover:text-brand">Testimonials</Link></li>
                 <li><Link href="/privacy-policy" className="hover:text-brand">Privacy Policy</Link></li>
               </ul>
             </div>

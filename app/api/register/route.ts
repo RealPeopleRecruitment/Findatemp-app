@@ -5,10 +5,9 @@ import { sendNewRegistrationNotification } from '@/lib/email';
 import { pushCandidateToCats } from '@/lib/cats';
 import { verifyTurnstileToken } from '@/lib/turnstile';
 import { checkRegisterRateLimit } from '@/lib/rate-limit';
+import { MINIMUM_WAGE, MAX_START_RATE, calcPayMax } from '@/lib/pay';
 
 export const runtime = 'nodejs';
-
-const MINIMUM_WAGE = 14.15;
 
 const MAX_CV_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_CV_TYPES = [
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
     const phone = String(formData.get('phone') || '').trim();
     const areaId = String(formData.get('areaId') || '').trim();
     const payMin = parseFloat(String(formData.get('payMin') || ''));
-    const payMax = parseFloat(String(formData.get('payMax') || ''));
     const drives = formData.get('drives') === 'true';
     const bullet1 = String(formData.get('bullet1') || '').trim();
     const bullet2 = String(formData.get('bullet2') || '').trim();
@@ -51,8 +49,8 @@ export async function POST(req: NextRequest) {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
     }
-    if (isNaN(payMin) || isNaN(payMax) || payMin < 0 || payMax < payMin) {
-      return NextResponse.json({ error: 'Please enter a valid pay range.' }, { status: 400 });
+    if (isNaN(payMin)) {
+      return NextResponse.json({ error: 'Please enter your lowest hourly rate.' }, { status: 400 });
     }
     if (payMin < MINIMUM_WAGE) {
       return NextResponse.json(
@@ -62,6 +60,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (payMin > MAX_START_RATE) {
+      return NextResponse.json(
+        { error: `Please enter a lowest hourly rate of €${MAX_START_RATE.toFixed(2)} or less.` },
+        { status: 400 }
+      );
+    }
+    // The top of the range is always set by us, never by the form.
+    const payMax = calcPayMax(Math.round(payMin * 100) / 100);
     if (categoryIds.length === 0) {
       return NextResponse.json({ error: 'Please select at least one category.' }, { status: 400 });
     }
@@ -98,7 +104,7 @@ export async function POST(req: NextRequest) {
         email,
         phone,
         areaId,
-        payMin,
+        payMin: Math.round(payMin * 100) / 100,
         payMax,
         drives,
         bullet1,

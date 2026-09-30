@@ -34,6 +34,7 @@ export default function MobileNav() {
             <Link href="/browse" onClick={() => setOpen(false)} className="py-2 hover:text-brand">Browse Temps</Link>
             <Link href="/#categories" onClick={() => setOpen(false)} className="py-2 hover:text-brand">Categories</Link>
             <Link href="/#areas" onClick={() => setOpen(false)} className="py-2 hover:text-brand">Dublin Areas</Link>
+            <Link href="/testimonials" onClick={() => setOpen(false)} className="py-2 hover:text-brand">Testimonials</Link>
             <Link href="/about" onClick={() => setOpen(false)} className="py-2 hover:text-brand">About</Link>
             <Link href="/contact" onClick={() => setOpen(false)} className="py-2 hover:text-brand">Contact</Link>
           </nav>

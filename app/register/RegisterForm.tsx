@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TurnstileWidget from '@/components/TurnstileWidget';
+import { MINIMUM_WAGE, MAX_START_RATE, calcPayMax, formatRate } from '@/lib/pay';
 
 type Area = { id: string; name: string };
 type Category = { id: string; name: string };
@@ -19,6 +20,20 @@ export default function RegisterForm({
   const [error, setError] = useState<string | null>(null);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
 const [turnstileToken, setTurnstileToken] = useState('');
+  const [payMinInput, setPayMinInput] = useState('');
+
+  const payMinValue = parseFloat(payMinInput);
+  const payValid =
+    !isNaN(payMinValue) && payMinValue >= MINIMUM_WAGE && payMinValue <= MAX_START_RATE;
+  const payPreview = payValid
+    ? `${formatRate(payMinValue)} to ${formatRate(calcPayMax(payMinValue))} per hour`
+    : null;
+  const payWarning =
+    payMinInput === '' || isNaN(payMinValue) || payValid
+      ? null
+      : payMinValue < MINIMUM_WAGE
+        ? `The lowest rate we can accept is ${formatRate(MINIMUM_WAGE)} per hour.`
+        : `Please enter a rate of ${formatRate(MAX_START_RATE)} per hour or less.`;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 e.preventDefault();
@@ -104,19 +119,34 @@ e.preventDefault();
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="payMin" className="block text-sm font-medium mb-1">Min Rate (€/hr) *</label>
-          <input id="payMin" name="payMin" type="number" step="0.01" min="14.15" required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor="payMax" className="block text-sm font-medium mb-1">Max Rate (€/hr) *</label>
-          <input id="payMax" name="payMax" type="number" step="0.01" min="14.15" required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-        </div>
+      <div>
+        <label htmlFor="payMin" className="block text-sm font-medium mb-1">
+          Your lowest hourly rate (€/hr) *
+        </label>
+        <input
+          id="payMin"
+          name="payMin"
+          type="number"
+          step="0.01"
+          min={MINIMUM_WAGE}
+          max={MAX_START_RATE}
+          required
+          value={payMinInput}
+          onChange={(e) => setPayMinInput(e.target.value)}
+          placeholder={`e.g. ${MINIMUM_WAGE.toFixed(2)}`}
+          className="w-full md:w-1/2 border border-gray-300 rounded-lg px-3 py-2"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Enter the lowest rate you would accept, between {formatRate(MINIMUM_WAGE)} (the Irish National
+          Minimum Wage) and {formatRate(MAX_START_RATE)}. We set the top of your range for you.
+        </p>
+        {payPreview && (
+          <p className="text-sm mt-2 bg-brand-light text-brand-dark rounded-lg px-3 py-2 inline-block">
+            Your profile will show: <strong>{payPreview}</strong>
+          </p>
+        )}
+        {payWarning && <p className="text-sm text-red-600 mt-2">{payWarning}</p>}
       </div>
-<p className="text-xs text-gray-500 -mt-3">
-        We require a minimum rate of €14.15/hr, in line with the Irish National Minimum Wage.
-      </p>
 
       <div className="space-y-3">
         <p className="block text-sm font-medium">Tell us about your experience — 3 short points *</p>

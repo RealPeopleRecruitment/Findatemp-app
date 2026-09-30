@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import PendingList from './PendingList';
 import ApproveAllButton from './ApproveAllButton';
+import TidyPayRangesButton from './TidyPayRangesButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +63,7 @@ export default async function AdminPage({
             {requestCount} request{requestCount === 1 ? "" : "s"} awaiting follow-up
           </Link>
           <ApproveAllButton totalPending={totalPending} />
+          <TidyPayRangesButton />
         </div>
       </div>
 

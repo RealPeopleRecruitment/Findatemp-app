@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: 'https://www.findatemp.ie/browse', priority: 0.9 },
     { url: 'https://www.findatemp.ie/register', priority: 0.7 },
     { url: 'https://www.findatemp.ie/about', priority: 0.5 },
+    { url: 'https://www.findatemp.ie/testimonials', priority: 0.6 },
     { url: 'https://www.findatemp.ie/contact', priority: 0.5 },
   ];
 

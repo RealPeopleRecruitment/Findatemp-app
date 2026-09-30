@@ -21,6 +21,7 @@ Contact: +353 1 254 4273, gerard@findatemp.ie, The Brickhouse, Block 1, Mount St
 - [Browse available temps](https://www.findatemp.ie/browse): search all temps available now across Dublin
 - [Request staff](https://www.findatemp.ie/contact): contact the team about a temp requirement
 - [About Find A Temp](https://www.findatemp.ie/about): company background and the full service
+- [Testimonials](https://www.findatemp.ie/testimonials): feedback from employers and temps
 
 ## Categories
 - [Warehouse temps](https://www.findatemp.ie/category/warehouse)
